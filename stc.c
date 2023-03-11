@@ -4,6 +4,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+#define BUFFER_SIZE 1024
+
 void display_help() {
     printf("Usage: stc [OPTION] [STRING]...\n");
     printf("Concatenate STRING to standard output.\n");
@@ -12,7 +14,8 @@ void display_help() {
 
 int main(int argc, char** argv) {
     int opt;
-    FILE *standard_output;
+    char buffer[BUFFER_SIZE];
+    FILE *output = stdout;
 
     while((opt = getopt(argc, argv, "f:h")) != -1) {
         switch(opt) {
@@ -22,22 +25,25 @@ int main(int argc, char** argv) {
                     return EXIT_FAILURE;
                 }
 
-                standard_output = fopen(optarg, "a");
-                fseek(standard_output, 0, SEEK_END);
+                output = fopen(optarg, "a");
+                fseek(output, 0, SEEK_END);
                 break;
             case 'h':
                 display_help();
+                return EXIT_SUCCESS;
             default:
                 printf("Try \"stc -h\" for more information.\n");
         }
     }
 
-    if (standard_output) {
-        fprintf(standard_output, "%s", argv[optind]);
-    } else {
-        fprintf(stdout, "%s\n", argv[optind]);
+    if(argc - optind >= 1) {
+        while(optind < argc) {
+            snprintf(buffer, BUFFER_SIZE, "%s ", argv[optind]);
+            fprintf(output, "%s", buffer);
+            optind++;
+        }
     }
 
-    fclose(standard_output);
-    return 0;
+    fclose(output);
+    return EXIT_SUCCESS;
 }
